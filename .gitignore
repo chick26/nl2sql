@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Data / artifacts (sensitive)
+data/
+hk_sea_cable_fault_info.csv
+海缆段落方向静态关系表.csv

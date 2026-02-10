@@ -345,15 +345,21 @@ def ner_based_extract(query: str) -> ExtractionResult | None:
     try:
         import torch
 
-        inputs = _ner_tokenizer(query, return_tensors="pt", truncation=True, max_length=128)
+        inputs = _ner_tokenizer(
+            query,
+            return_tensors="pt",
+            truncation=True,
+            max_length=128,
+            return_offsets_mapping=True,
+        )
+        offset_mapping = inputs.pop("offset_mapping")[0].tolist()
         with torch.no_grad():
             outputs = _ner_model(**inputs)
         predictions = torch.argmax(outputs.logits, dim=-1)[0].tolist()
-        tokens = _ner_tokenizer.convert_ids_to_tokens(inputs["input_ids"][0])
         labels = [config.NER_LABELS[p] for p in predictions]
 
-        # 合并 BIO 标签为实体
-        entities = _merge_bio_entities(tokens, labels)
+        # 合并 BIO 标签为实体（基于 offset mapping，避免 [UNK]）
+        entities = _merge_bio_entities_with_offsets(query, labels, offset_mapping)
 
         cables, segments, cities = [], [], []
         for etype, raw_text in entities:
@@ -364,7 +370,7 @@ def ner_based_extract(query: str) -> ExtractionResult | None:
                 std = _segment_reverse.get(raw_text.lower(), raw_text)
                 segments.append(EntityMatch(raw=raw_text, standard=std, entity_type="segment", confidence=0.85, source="ner"))
             elif etype == "CITY":
-                std = _city_reverse.get(raw_text, raw_text)
+                std = _city_reverse.get(raw_text, _city_reverse.get(raw_text.lower(), raw_text))
                 cities.append(EntityMatch(raw=raw_text, standard=std, entity_type="city", confidence=0.85, source="ner"))
 
         return ExtractionResult(cable_names=cables, segments=segments, cities=cities, normalized_query=query)
@@ -397,6 +403,42 @@ def _merge_bio_entities(tokens: list[str], labels: list[str]) -> list[tuple[str,
 
     if current_type:
         entities.append((current_type, "".join(current_tokens).replace("##", "")))
+
+    return entities
+
+
+def _merge_bio_entities_with_offsets(
+    text: str,
+    labels: list[str],
+    offsets: list[tuple[int, int]],
+) -> list[tuple[str, str]]:
+    """将 BIO 标签序列合并为实体列表（基于 offset mapping 还原原文子串）"""
+    entities = []
+    current = None  # {"type": str, "start": int, "end": int}
+
+    for label, (start, end) in zip(labels, offsets):
+        if start == 0 and end == 0:
+            continue  # special tokens
+
+        if label.startswith("B-"):
+            if current:
+                raw = text[current["start"]:current["end"]]
+                if raw:
+                    entities.append((current["type"], raw))
+            current = {"type": label[2:], "start": start, "end": end}
+        elif label.startswith("I-") and current and current["type"] == label[2:]:
+            current["end"] = end
+        else:
+            if current:
+                raw = text[current["start"]:current["end"]]
+                if raw:
+                    entities.append((current["type"], raw))
+                current = None
+
+    if current:
+        raw = text[current["start"]:current["end"]]
+        if raw:
+            entities.append((current["type"], raw))
 
     return entities
 

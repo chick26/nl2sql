@@ -7,6 +7,7 @@ import os
 import sys
 
 import torch
+import inspect
 from torch.utils.data import Dataset, DataLoader
 from transformers import (
     AutoTokenizer,
@@ -177,15 +178,24 @@ def train(
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     # Trainer
-    trainer = Trainer(
+    trainer_kwargs = dict(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
-        tokenizer=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
     )
+
+    # transformers>=4.40 deprecates/changes Trainer tokenizer arg.
+    # Use whichever parameter is supported by the installed version.
+    trainer_sig = inspect.signature(Trainer.__init__)
+    if "tokenizer" in trainer_sig.parameters:
+        trainer_kwargs["tokenizer"] = tokenizer
+    elif "processing_class" in trainer_sig.parameters:
+        trainer_kwargs["processing_class"] = tokenizer
+
+    trainer = Trainer(**trainer_kwargs)
 
     # 训练
     print("\n开始训练...")
