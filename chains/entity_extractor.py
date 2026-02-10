@@ -447,16 +447,10 @@ def _merge_bio_entities_with_offsets(
 
 def llm_fallback_extract(query: str) -> ExtractionResult:
     """Level 3: 使用 Qwen3-32B thinking 模式兜底"""
-    from langchain_openai import ChatOpenAI
     from langchain_core.prompts import ChatPromptTemplate
+    from llm_factory import create_chat_llm
 
-    llm = ChatOpenAI(
-        base_url=config.LLM_BASE_URL,
-        model=config.LLM_MODEL_NAME,
-        api_key=config.LLM_API_KEY,
-        temperature=0,
-        extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-    )
+    llm = create_chat_llm(thinking=True, temperature=0)
 
     cable_list = ", ".join(_cable_aliases.keys())
     segment_list = ", ".join(list(_segment_aliases.keys())[:30]) + " ..."

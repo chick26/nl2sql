@@ -16,3 +16,6 @@ hk_sea_cable_fault_info.csv
 
 # Local-only docs
 README.local.md
+
+# Local LLM config
+.env.local

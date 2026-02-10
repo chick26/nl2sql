@@ -7,23 +7,17 @@ import re
 import sys
 from datetime import date
 
-from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 import config
+from llm_factory import create_chat_llm
 from prompts.text2sql import TEXT2SQL_PROMPT
 from chains.entity_extractor import ExtractionResult
 
 # ─── 不启用 thinking 的 LLM (追求速度) ───
-llm_no_think = ChatOpenAI(
-    base_url=config.LLM_BASE_URL,
-    model=config.LLM_MODEL_NAME,
-    api_key=config.LLM_API_KEY,
-    temperature=0,
-    extra_body={"chat_template_kwargs": {"enable_thinking": False}},
-)
+llm_no_think = create_chat_llm(thinking=False, temperature=0)
 
 
 def _clean_sql(text: str) -> str:

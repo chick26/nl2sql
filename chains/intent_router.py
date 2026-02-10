@@ -6,22 +6,16 @@ import json
 import sys
 import os
 
-from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 import config
+from llm_factory import create_chat_llm
 from prompts.intent import INTENT_PROMPT
 
 # ─── 支持 thinking 模式的 LLM ───
-llm_think = ChatOpenAI(
-    base_url=config.LLM_BASE_URL,
-    model=config.LLM_MODEL_NAME,
-    api_key=config.LLM_API_KEY,
-    temperature=0.1,
-    extra_body={"chat_template_kwargs": {"enable_thinking": True}},
-)
+llm_think = create_chat_llm(thinking=True, temperature=0.1)
 
 VALID_INTENTS = {
     "fault_status", "business_impact", "fault_time",

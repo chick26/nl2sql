@@ -4,23 +4,17 @@
 import os
 import sys
 
-from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 from sqlalchemy import create_engine, text
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 import config
+from llm_factory import create_chat_llm
 from prompts.answer import ANSWER_PROMPT, REJECT_PROMPT
 
 # ─── LLM (no_think 模式) ───
-llm_no_think = ChatOpenAI(
-    base_url=config.LLM_BASE_URL,
-    model=config.LLM_MODEL_NAME,
-    api_key=config.LLM_API_KEY,
-    temperature=0.1,
-    extra_body={"chat_template_kwargs": {"enable_thinking": False}},
-)
+llm_no_think = create_chat_llm(thinking=False, temperature=0.1)
 
 # ─── 数据库引擎 ───
 _engine = None

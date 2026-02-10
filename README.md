@@ -129,18 +129,48 @@ curl -X POST http://localhost:8080/api/extract_entities \
 
 ## 环境变量
 
-通过环境变量覆盖默认配置（定义在 `config.py`）：
+通过环境变量覆盖默认配置（定义在 `config.py`）。  
+支持本地 `.env.local` 文件（仅本地使用，不提交）：
+
+```bash
+cp .env.local.example .env.local
+```
+
+`.env.local` 会在启动时被自动读取（不会覆盖已存在的系统环境变量）。
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
+| `LLM_PROVIDER` | `openai_compat` | 大模型提供方：`openai_compat`/`openai`/`azure` |
 | `LLM_BASE_URL` | `http://10.120.84.7:8001/v1` | Qwen3-32B API 地址 |
 | `LLM_MODEL_NAME` | `Qwen/Qwen3-32B` | 模型名称 |
 | `LLM_API_KEY` | `test` | API Key |
+| `LLM_SUPPORTS_THINKING` | `true` | 是否支持 thinking 模式（不支持可设为 `false`） |
+| `AZURE_OPENAI_ENDPOINT` | 空 | Azure OpenAI 端点 |
+| `AZURE_OPENAI_API_KEY` | 空 | Azure OpenAI Key |
+| `AZURE_OPENAI_API_VERSION` | 空 | Azure OpenAI API 版本 |
+| `AZURE_OPENAI_DEPLOYMENT` | 空 | Azure OpenAI 部署名 |
 
-示例：
+示例（OpenAI 兼容接口）：
 
 ```bash
 LLM_BASE_URL=http://your-server:8001/v1 uv run python server.py
+```
+
+示例（OpenAI 官方）：
+
+```bash
+LLM_PROVIDER=openai LLM_MODEL_NAME=gpt-4o-mini LLM_API_KEY=your-key uv run python server.py
+```
+
+示例（Azure OpenAI）：
+
+```bash
+LLM_PROVIDER=azure \
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com \
+AZURE_OPENAI_API_KEY=your-key \
+AZURE_OPENAI_API_VERSION=2024-02-15-preview \
+AZURE_OPENAI_DEPLOYMENT=your-deployment \
+uv run python server.py
 ```
 
 ## 支持的问题类型

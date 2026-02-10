@@ -1,12 +1,48 @@
 """
 海缆 NL2SQL 系统全局配置
+支持本地 .env.local 覆盖(不提交)
 """
 import os
 
-# ─── Qwen3-32B API 配置 ───
+
+def _load_env_file(path: str) -> None:
+    """加载本地 env 文件(简单 KEY=VALUE)，不覆盖已存在的环境变量"""
+    if not os.path.exists(path):
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = value
+    except Exception:
+        # 不影响主流程
+        pass
+
+
+# 优先加载本地配置(不提交)
+_load_env_file(os.path.join(os.path.dirname(__file__), ".env.local"))
+
+# ─── LLM 配置 ───
+# LLM_PROVIDER: openai_compat / openai / azure
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai_compat")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://10.120.84.7:8001/v1")
 LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "Qwen/Qwen3-32B")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "test")
+LLM_SUPPORTS_THINKING = os.getenv("LLM_SUPPORTS_THINKING", "true").lower() in ("1", "true", "yes", "y")
+
+# ─── Azure OpenAI (可选) ───
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "")
+AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
 
 # ─── 数据库配置 ───
 DB_PATH = os.path.join(os.path.dirname(__file__), "data", "sea_cable.db")
