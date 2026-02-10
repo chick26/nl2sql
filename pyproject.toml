@@ -1,0 +1,42 @@
+[project]
+name = "nl2sql"
+version = "1.0.0"
+description = "海缆故障 NL2SQL 问答系统 - 基于 Qwen3-32B + LangChain"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain>=0.3",
+    "langchain-openai>=0.3",
+    "langchain-community>=0.3",
+    "openai>=1.0",
+    "rapidfuzz>=3.0",
+    "pandas>=2.0",
+    "sqlalchemy>=2.0",
+    "uvicorn",
+    "fastapi",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+# NER 训练相关 (需要 GPU 环境)
+train = [
+    "transformers>=4.40",
+    "torch>=2.0",
+]
+# Qwen3-0.6B LoRA 微调 (方案B)
+lora = [
+    "transformers>=4.40",
+    "torch>=2.0",
+    "peft",
+    "trl",
+    "datasets",
+]
+# 开发工具
+dev = [
+    "pytest",
+    "httpx",
+]
+
+[project.scripts]
+nl2sql-server = "server:main"
+nl2sql-etl = "etl.clean_fault_data:load_to_db"
+nl2sql-dict = "etl.build_dictionary:build_all_dictionaries"
