@@ -13,3 +13,6 @@ wheels/
 data/
 hk_sea_cable_fault_info.csv
 海缆段落方向静态关系表.csv
+
+# Local-only docs
+README.local.md
